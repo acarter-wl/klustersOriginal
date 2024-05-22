@@ -10,7 +10,6 @@ import sys
 GLOBAL_CLI_TOOLS = ["age", "flux", "helmfile", "sops", "jq", "kubeconform", "kustomize", "talosctl", "talhelper"]
 CLOUDFLARE_TOOLS = ["cloudflared"]
 
-
 def required(*keys: str):
     def wrapper_outter(func: Callable):
         @wraps(func)
@@ -24,12 +23,10 @@ def required(*keys: str):
 
     return wrapper_outter
 
-
 def validate_python_version() -> None:
     required_version = (3, 11, 0)
     if sys.version_info < required_version:
         raise ValueError(f"Python {sys.version_info} is below 3.11. Please upgrade.")
-
 
 def validate_ip(ip: str) -> str:
     try:
@@ -37,7 +34,6 @@ def validate_ip(ip: str) -> str:
     except netaddr.core.AddrFormatError as e:
         raise ValueError(f"Invalid IP address {ip}") from e
     return ip
-
 
 def validate_network(cidr: str, family: int) -> str:
     try:
@@ -48,18 +44,17 @@ def validate_network(cidr: str, family: int) -> str:
         raise ValueError(f"Invalid CIDR {cidr}") from e
     return cidr
 
-
 def validate_node(node: dict, node_cidr: str) -> None:
     if not node.get("name"):
         raise ValueError(f"A node is missing a name")
     if not re.match(r"^[a-z0-9-]+$", node.get('name')):
         raise ValueError(f"Node {node.get('name')} has an invalid name")
-    if not node.get("disk"):
-        raise ValueError(f"Node {node.get('name')} is missing disk")
-    if not node.get("mac_addr"):
-        raise ValueError(f"Node {node.get('name')} is missing mac_addr")
-    if not re.match(r"(?:[0-9a-fA-F]:?){12}", node.get("mac_addr")):
-        raise ValueError(f"Node {node.get('name')} has an invalid mac_addr, is this a MAC address?")
+    if not node.get("talos_disk"):
+        raise ValueError(f"Node {node.get('name')} is missing talos_disk")
+    if not node.get("talos_nic"):
+        raise ValueError(f"Node {node.get('name')} is missing talos_nic")
+    if not re.match(r"(?:[0-9a-fA-F]:?){12}", node.get("talos_nic")):
+        raise ValueError(f"Node {node.get('name')} has an invalid talos_nic, is this a MAC address?")
     if node.get("address"):
         ip = validate_ip(node.get("address"))
         if netaddr.IPAddress(ip, 4) not in netaddr.IPNetwork(node_cidr):
@@ -70,7 +65,6 @@ def validate_node(node: dict, node_cidr: str) -> None:
             if result != 0:
                 raise ValueError(f"Node {node.get('name')} port 50000 is not open")
 
-
 @required("bootstrap_cloudflare")
 def validate_cli_tools(cloudflare: dict, **_) -> None:
     for tool in GLOBAL_CLI_TOOLS:
@@ -80,12 +74,10 @@ def validate_cli_tools(cloudflare: dict, **_) -> None:
         if not which(tool):
             raise ValueError(f"Missing required CLI tool {tool}")
 
-
 @required("bootstrap_sops_age_pubkey")
 def validate_age(key: str, **_) -> None:
     if not re.match(r"^age1[a-z0-9]{0,58}$", key):
         raise ValueError(f"Invalid Age public key {key}")
-
 
 @required("bootstrap_node_network", "bootstrap_node_inventory")
 def validate_nodes(node_cidr: str, nodes: dict[list], **_) -> None:
@@ -102,7 +94,6 @@ def validate_nodes(node_cidr: str, nodes: dict[list], **_) -> None:
     workers = [node for node in nodes if node.get('controller') == False]
     for node in workers:
         validate_node(node, node_cidr)
-
 
 def validate(data: dict) -> None:
     validate_python_version()

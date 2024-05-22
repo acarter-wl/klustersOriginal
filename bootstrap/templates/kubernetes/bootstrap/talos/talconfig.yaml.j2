@@ -25,11 +25,11 @@ nodes:
   #% for item in bootstrap_node_inventory %#
   - hostname: "#{ item.name }#"
     ipAddress: "#{ item.address }#"
-    #% if item.disk.startswith('/') %#
-    installDisk: "#{ item.disk }#"
+    #% if item.talos_disk.startswith('/') %#
+    installDisk: "#{ item.talos_disk }#"
     #% else %#
     installDiskSelector:
-      serial: "#{ item.disk }#"
+      serial: "#{ item.talos_disk }#"
     #% endif %#
     #% if bootstrap_secureboot.enabled %#
     machineSpec:
@@ -41,7 +41,7 @@ nodes:
     controlPlane: #{ (item.controller) | string | lower }#
     networkInterfaces:
       - deviceSelector:
-          hardwareAddr: "#{ item.mac_addr | lower }#"
+          hardwareAddr: "#{ item.talos_nic | lower }#"
         #% if bootstrap_vlan %#
         vlans:
           - vlanId: #{ bootstrap_vlan }#
