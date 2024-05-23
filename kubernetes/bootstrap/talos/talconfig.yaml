@@ -1,8 +1,10 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/budimanjojo/talhelper/master/pkg/config/schemas/talconfig.json
+---
 # renovate: datasource=docker depName=ghcr.io/siderolabs/installer
 talosVersion: v1.7.2
 # renovate: datasource=docker depName=ghcr.io/siderolabs/kubelet
 kubernetesVersion: v1.30.1
+
 clusterName: &cluster home-kubernetes
 endpoint: https://192.168.101.254:6443
 clusterPodNets:
@@ -15,9 +17,11 @@ additionalApiServerCertSans: &sans
   - "192.168.101.252"
   - "*.fuzzywumpkins"
   - "192.168.101.253"
+  - "192.168.101.254"
 additionalMachineCertSans: *sans
 cniConfig:
   name: none
+
 nodes:
   - hostname: "talos1"
     ipAddress: "192.168.101.22"
@@ -115,6 +119,7 @@ nodes:
           - network: 0.0.0.0/0
             gateway: "192.168.100.1"
         mtu: 1500
+
 patches:
   # Configure containerd
   - |-
@@ -130,11 +135,13 @@ patches:
               discard_unpacked_layers = false
             [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
               discard_unpacked_layers = false
+
   # Disable search domain everywhere
   - |-
     machine:
       network:
         disableSearchDomain: true
+
   # Enable cluster discovery
   - |-
     cluster:
@@ -144,6 +151,7 @@ patches:
             disabled: false
           service:
             disabled: false
+
   # Configure kubelet
   - |-
     machine:
@@ -152,6 +160,7 @@ patches:
           rotate-server-certificates: true
         nodeIP:
           validSubnets: ["192.168.100.0/23"]
+
   # Force nameserver
   - |-
     machine:
@@ -159,13 +168,33 @@ patches:
         nameservers:
           - 1.1.1.1
           - 1.0.0.1
+
   # Configure NTP
   - |-
     machine:
       time:
         disabled: false
         servers:
-          - time.cloudflare.com
+          - t
+          - i
+          - m
+          - e
+          - .
+          - c
+          - l
+          - o
+          - u
+          - d
+          - f
+          - l
+          - a
+          - r
+          - e
+          - .
+          - c
+          - o
+          - m
+
   # Custom sysctl settings
   - |-
     machine:
@@ -175,6 +204,7 @@ patches:
         fs.inotify.max_user_instances: "8192"
         net.core.rmem_max: "2500000"
         net.core.wmem_max: "2500000"
+
   # Mount openebs-hostpath in kubelet
   - |-
     machine:
@@ -184,6 +214,9 @@ patches:
             type: bind
             source: /var/openebs/local
             options: ["bind", "rshared", "rw"]
+
+
+
 controlPlane:
   patches:
     # Cluster configuration
@@ -200,6 +233,7 @@ controlPlane:
         scheduler:
           extraArgs:
             bind-address: 0.0.0.0
+
     # ETCD configuration
     - |-
       cluster:
@@ -208,10 +242,12 @@ controlPlane:
             listen-metrics-urls: http://0.0.0.0:2381
           advertisedSubnets:
             - "192.168.100.0/23"
+
     # Disable default API server admission plugins.
     - |-
       - op: remove
         path: /cluster/apiServer/admissionControl
+
     # Enable K8s Talos API Access
     - |-
       machine:
